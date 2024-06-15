@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Wizualizacja Wzorów Cięcia</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            margin-top: 20px;
+        }
+        .card-header {
+            font-weight: bold;
+        }
+        .card-body p {
+            margin: 0;
+        }
+        .plot-image {
+            width: 100%;
+            height: auto;
+        }
+        .large-font {
+            font-size: 1.2em;
+        }
+        .list-group-item {
+            border: none;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Wizualizacja Wzorów Cięcia</h1>
+
+        <div class="row d-flex align-items-stretch">
+            <div class="col-md-6 d-flex">
+                <div class="card h-100 w-100">
+                    <div class="card-header">
+                        Żądanie cięcia
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item large-font"><strong>Długość surowca:</strong> <span id="raw_length"></span></li>
+                            <li class="list-group-item large-font"><strong>Łączna długość odpadów:</strong> <span id="genotype_waste"></span></li>
+                            <li class="list-group-item large-font"><strong>Zużyta ilość surowca:</strong> <span id="beam_count"></span></li>
+                            <li class="list-group-item large-font"><strong>Łączna długość wyciętych elementów:</strong> <span id="all_elements_length"></span></li>
+                            <li class="list-group-item large-font"><strong>Surowca wykorzystano:</strong> <span id="surowca_utilization"></span>%</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 d-flex">
+                <div class="card h-100 w-100">
+                    <div class="card-header">
+                        Żądane długości
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Part length / Label</th>
+                                    <th>Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody id="desired_lengths_table_body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                Wzorce cięcia
+            </div>
+            <div class="card-body">
+                <img src="{{ plot_uri }}" alt="Wykres cięcia" class="plot-image">
+                <pre id="visualization_data"></pre> <!-- Debugging line to check data -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const visualizationData = {{ visualization_data|safe }};
+
+            // Wyświetlanie danych w odpowiednich elementach HTML
+            document.getElementById('raw_length').textContent = visualizationData.raw_length;
+            document.getElementById('genotype_waste').textContent = visualizationData.genotype_waste;
+            document.getElementById('beam_count').textContent = visualizationData.beam_count;
+            document.getElementById('all_elements_length').textContent = visualizationData.all_elements_length;
+            document.getElementById('surowca_utilization').textContent = visualizationData.surowca_utilization.toFixed(2);
+
+            // Wyświetlanie żądanych długości w tabeli
+            const desiredLengthsTableBody = document.getElementById('desired_lengths_table_body');
+            const desiredLengths = visualizationData.unique_element_lengths_and_count_dict;
+
+            for (const [length, qty] of Object.entries(desiredLengths)) {
+                const row = document.createElement('tr');
+                const lengthCell = document.createElement('td');
+                lengthCell.textContent = length;
+                const qtyCell = document.createElement('td');
+                qtyCell.textContent = qty;
+                row.appendChild(lengthCell);
+                row.appendChild(qtyCell);
+                desiredLengthsTableBody.appendChild(row);
+            }
+        });
+    </script>
+</body>
+</html>

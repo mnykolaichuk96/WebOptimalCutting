@@ -1,0 +1,12 @@
+services:
+  cutting-db:
+    image: mysql
+    container_name: cutting-db
+    hostname: cutting-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: cutting-db
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./mysql-db:/var/lib/mysql

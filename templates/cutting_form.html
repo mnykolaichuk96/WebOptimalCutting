@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Formularz cięcia</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            margin-top: 20px;
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .btn-submit {
+            font-size: 1.2em;
+        }
+        .form-table th, .form-table td {
+            vertical-align: middle;
+        }
+        .errorlist {
+            color: red;
+            list-style-type: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="form-header">Formularz cięcia</h1>
+        <form method="post" action="{% url 'cutting_form_manual' %}">
+            {% csrf_token %}
+            {% if manual_form.non_field_errors %}
+                <div class="alert alert-danger">
+                    <ul class="errorlist">
+                        {% for error in manual_form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    Available stock
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="raw_length">Length</label>
+                        {{ manual_form.raw_length }}
+                        {% for error in manual_form.raw_length.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header">
+                    Required parts
+                </div>
+                <div class="card-body">
+                    <table class="table form-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Length</th>
+                                <th>Quantity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="parts_table_body">
+                            <tr>
+                                <td>1</td>
+                                <td><input type="text" name="parts_length[]" class="form-control"></td>
+                                <td><input type="text" name="parts_quantity[]" class="form-control"></td>
+                                <td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-primary" id="add_part_row">Add</button>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-success btn-submit">Calculate</button>
+            </div>
+        </form>
+
+        <form method="post" enctype="multipart/form-data" action="{% url 'cutting_form_file' %}">
+            {% csrf_token %}
+            {% if file_form.non_field_errors %}
+                <div class="alert alert-danger">
+                    <ul class="errorlist">
+                        {% for error in file_form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    Upload parts file
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="parts_file">Upload Parts File</label>
+                        {{ file_form.parts_file }}
+                        {% for error in file_form.parts_file.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-success btn-submit">Upload and Calculate</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#add_part_row').click(function() {
+                const rowCount = $('#parts_table_body tr').length + 1;
+                const newRow = `
+                    <tr>
+                        <td>${rowCount}</td>
+                        <td><input type="text" name="parts_length[]" class="form-control"></td>
+                        <td><input type="text" name="parts_quantity[]" class="form-control"></td>
+                        <td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
+                    </tr>`;
+                $('#parts_table_body').append(newRow);
+            });
+
+            $(document).on('click', '.remove-row', function() {
+                $(this).closest('tr').remove();
+                updateRowNumbers('#parts_table_body');
+            });
+
+            function updateRowNumbers(tableBodySelector) {
+                $(tableBodySelector + ' tr').each(function(index, row) {
+                    $(row).find('td:first').text(index + 1);
+                });
+            }
+
+            updateRowNumbers('#parts_table_body');
+        });
+    </script>
+</body>
+</html>
