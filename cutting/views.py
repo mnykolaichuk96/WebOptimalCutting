@@ -1,19 +1,18 @@
 import json
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.safestring import mark_safe
 from . import genetic_algorithm_v2
 from .forms import FileCuttingForm, ManualCuttingForm
 from .models import CuttingRequest, CuttingPattern, CuttingPatternUsage
 
 
-def save_cutting_request_and_generate_plot(raw_length, desired_lengths):
-    print('---save_cutting_request_and_generate_plot')
+def save_cutting_pattern_and_generate_plot(request_id):
     # Zapisujemy żądanie cięcia
-    cutting_request = CuttingRequest.objects.create(raw_length=raw_length, desired_lengths=desired_lengths)
+    cutting_request = get_object_or_404(CuttingRequest, id=request_id)
 
-    desired_lengths = str(desired_lengths).lstrip('[').rstrip(']').split(',')
-    element_lengths = [int(el) for el in desired_lengths]
+    raw_length = cutting_request.raw_length
+    element_lengths = list(map(int, cutting_request.desired_lengths.split(',')))
 
     ga_v2 = genetic_algorithm_v2.GeneticAlgorithm(
         beam_length=raw_length,
@@ -65,7 +64,7 @@ def save_cutting_request_and_generate_plot(raw_length, desired_lengths):
             'chromosomes': cutting_patterns_for_best_solution,
             'genotype_waste': genotype_waste,
             'raw_length': raw_length,
-            'desired_lengths': desired_lengths,
+            'desired_lengths': element_lengths,
             'unique_element_lengths_and_count_dict': unique_element_lengths_and_count_dict,
             'beam_count': beam_count,
             'all_elements_length': all_elements_length,
@@ -77,14 +76,20 @@ def save_cutting_request_and_generate_plot(raw_length, desired_lengths):
     return cutting_request.id, plot_uri, json_visualization_data
 
 
+def save_cutting_request(raw_length, desired_lengths):
+    desired_lengths = ','.join(map(str, desired_lengths))
+
+    cutting_request = CuttingRequest.objects.create(raw_length=raw_length, desired_lengths=desired_lengths)
+
+    return cutting_request.id
+
+
 def cutting_visualization_view(request, request_id):
-    print('---cutting_visualization_view')
     # Pobieramy żądanie cięcia z bazy danych
     request_obj = CuttingRequest.objects.get(id=request_id)
 
     # Uruchamiamy algorytm i generujemy wykres
-    request_id, plot_uri, json_visualization_data = save_cutting_request_and_generate_plot(int(request_obj.raw_length),
-                                                                                           request_obj.desired_lengths)
+    request_id, plot_uri, json_visualization_data = save_cutting_pattern_and_generate_plot(request_id)
 
     # Renderujemy dane na front-end
     context = {
@@ -96,14 +101,12 @@ def cutting_visualization_view(request, request_id):
 
 
 def cutting_form_view(request):
-    print('---cutting_form_view')
     manual_form = ManualCuttingForm()
     file_form = FileCuttingForm()
     return render(request, 'cutting_form.html', {'manual_form': manual_form, 'file_form': file_form})
 
 
 def cutting_form_manual_view(request):
-    print('---cutting_form_manual_view')
     if request.method == 'POST':
         form = ManualCuttingForm(request.POST)
         if form.is_valid():
@@ -115,7 +118,8 @@ def cutting_form_manual_view(request):
             expanded_list = [length for length, quantity in zip(parts_length, parts_quantity) for _ in range(quantity)]
 
             # Przekazanie rozszerzonej listy do funkcji obsługującej logikę cięcia
-            request_id, plot_uri, json_visualization_data = save_cutting_request_and_generate_plot(raw_length, expanded_list)
+            request_id = save_cutting_request(raw_length, expanded_list)
+
             return redirect('cutting_visualization', request_id=request_id)
         else:
             print(form.errors)  # Wyświetlanie błędów formularza dla debugowania
@@ -123,7 +127,6 @@ def cutting_form_manual_view(request):
 
 
 def cutting_form_file_view(request):
-    print('---cutting_form_file_view')
     if request.method == 'POST':
         form = FileCuttingForm(request.POST, request.FILES)
         if form.is_valid():
@@ -133,8 +136,7 @@ def cutting_form_file_view(request):
             raw_length = parts_list[0]
             expanded_list = parts_list[1:]
 
-            request_id, plot_uri, json_visualization_data = (
-                save_cutting_request_and_generate_plot(raw_length, expanded_list))
+            request_id = save_cutting_request(raw_length, expanded_list)
 
             return redirect('cutting_visualization', request_id=request_id)
         else:
