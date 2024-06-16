@@ -26,12 +26,40 @@
             color: red;
             list-style-type: none;
         }
+
+        /* CSS for loader */
+        .loader {
+            border: 16px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 16px solid #3498db;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            margin: auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-message {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        #loading-indicator {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="form-header">Formularz cięcia</h1>
-        <form method="post" action="{% url 'cutting_form_manual' %}">
+        <form id="manualForm" method="post" action="{% url 'cutting_form_manual' %}">
             {% csrf_token %}
             {% if manual_form.non_field_errors %}
                 <div class="alert alert-danger">
@@ -83,11 +111,17 @@
                 </div>
             </div>
             <div class="action-buttons">
-                <button type="submit" class="btn btn-success btn-submit">Calculate</button>
+                <button type="submit" class="btn btn-success btn-submit" id="calculate-button">Calculate</button>
             </div>
         </form>
 
-        <form method="post" enctype="multipart/form-data" action="{% url 'cutting_form_file' %}">
+        <!-- Loading indicator for manual form -->
+        <div id="loading-indicator">
+            <div class="loader"></div>
+            <div class="loading-message">Dane się liczą, to może chwilę potrwać. Proszę czekać...</div>
+        </div>
+
+        <form id="fileForm" method="post" enctype="multipart/form-data" action="{% url 'cutting_form_file' %}">
             {% csrf_token %}
             {% if file_form.non_field_errors %}
                 <div class="alert alert-danger">
@@ -113,13 +147,13 @@
                 </div>
             </div>
             <div class="action-buttons">
-                <button type="submit" class="btn btn-success btn-submit">Upload and Calculate</button>
+                <button type="submit" class="btn btn-success btn-submit" id="upload-calculate-button">Upload and Calculate</button>
             </div>
         </form>
     </div>
 
     <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
@@ -148,6 +182,18 @@
             }
 
             updateRowNumbers('#parts_table_body');
+
+            const manualForm = document.getElementById('manualForm');
+            const fileForm = document.getElementById('fileForm');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            manualForm.addEventListener('submit', function() {
+                loadingIndicator.style.display = 'block';
+            });
+
+            fileForm.addEventListener('submit', function() {
+                loadingIndicator.style.display = 'block';
+            });
         });
     </script>
 </body>

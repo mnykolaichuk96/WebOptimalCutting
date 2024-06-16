@@ -2,7 +2,7 @@ from django.db import models
 
 
 class CuttingRequest(models.Model):
-    raw_length = models.FloatField()
+    raw_length = models.IntegerField()
     desired_lengths = models.TextField()  # Lista żądanych długości jako tekst
     created_at = models.DateTimeField(auto_now_add=True)
 

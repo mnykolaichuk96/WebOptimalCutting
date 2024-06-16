@@ -11,6 +11,9 @@
         }
         .card-header {
             font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .card-body p {
             margin: 0;
@@ -30,7 +33,10 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center">Wizualizacja Wzorów Cięcia</h1>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="text-center">Wizualizacja Wzorów Cięcia</h1>
+            <a href="{% url 'cutting_form' %}" class="btn btn-primary">Wstecz</a>
+        </div>
 
         <div class="row d-flex align-items-stretch">
             <div class="col-md-6 d-flex">
